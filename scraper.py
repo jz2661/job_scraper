@@ -4,6 +4,7 @@ import numpy as np
 from datetime import datetime
 from util import *
 from efin import search_ejoblist
+from glassdoor import search_glassdoor_joblist
 from selenium.webdriver.chrome.options import Options
 
 # We need monkey_patching according to the page below
@@ -20,7 +21,8 @@ from linkedin_jobs_scraper.filters import RelevanceFilters, TimeFilters, TypeFil
 logging.basicConfig(level = logging.WARN)
 
 os.environ['LI_AT_COOKIE'] = r'AQEDAQ7-cxkFtGe8AAABglkj3I0AAAGCfTBgjVYAJL4aurh9YlOjhSAyQiKUf3UE-YfetnoFOnZ0zkHU1pgOfPy46h-8dFWzbDdpafxgg3I24YmVqYsrZbnERmdt-5CNvlFAuIuTOBwvIGAJY6rc4p_h'
-os.chdir(r'C:\repo\linkedin')
+wdr = r'C:\repo\job_scraper'
+os.chdir(wdr)
 
 joblist = []
 
@@ -49,7 +51,7 @@ options.add_argument("--disable-browser-side-navigation")
 options.add_argument("--disable-gpu")
 
 scraper = LinkedinScraper(
-    chrome_executable_path=r'C:\repo\linkedin\chromedriver.exe', # Custom Chrome executable path (e.g. /foo/bar/bin/chromedriver) 
+    chrome_executable_path=os.path.join(wdr, 'chromedriver.exe'), # Custom Chrome executable path (e.g. /foo/bar/bin/chromedriver) 
     chrome_options=None,  # Custom Chrome options here
     headless=True,  # Overrides headless mode only if chrome_options is None
     max_workers=1,  # How many threads will be spawned to run queries concurrently (one Chrome driver for each thread)
@@ -64,6 +66,31 @@ scraper.on(Events.END, on_end)
 
 titles = ['Quantitative','Derivative','Python','Option Trader','Market Making','Vice President','Structuring', \
             'QIS','Financial Engineering']
+#titles = ['Quantitative',] # test
+
+glassdoor_param = {
+    'q': 'quant',   
+    'days': 7,
+}
+
+#### Glassdoor
+tfmap = {
+    'd': 1,
+    'w': 7,
+    'm': 30,
+}
+timefilter = tfmap[sys.argv[1]]
+
+# HongKong only now
+queries = [
+    {
+    'q': title,
+    'days': timefilter,
+    } for title in titles
+]
+gjoblist=search_glassdoor_joblist(queries)
+#### Glassdoor END
+
 
 #### EFIN
 tfmap = {
@@ -73,6 +100,7 @@ tfmap = {
 }
 timefilter = tfmap[sys.argv[1]]
 
+# HongKong only now
 queries = [
     {
     'q': title,
@@ -121,7 +149,7 @@ queries = [
 scraper.run(queries)
 #### LinkedIn End
 
-df = pd.DataFrame([expand_data(d) for d in joblist]+ejoblist,columns=['date','title','company','ap','link','des','place'])
+df = pd.DataFrame([expand_data(d) for d in joblist]+ejoblist+gjoblist,columns=['date','title','company','ap','link','des','place'])
 
 df = black(df)
 df = rank(df)
