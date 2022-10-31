@@ -153,13 +153,17 @@ def search_glassdoor(params):
         gs = glassdoor_scraper(None, url, 30)
         
         for job in gs.jobs:
+            try:
+                des = float(job[1])
+            except:
+                des = 3
             record = {
                 'date': date.today().isoformat(),
                 'company': job[0],
                 'title': job[2],
                 'ap': job[-1],
                 'link': '',
-                'des': float(job[1]),
+                'des': des,
                 'place': job[3],
             }
             jobs.append(record)
