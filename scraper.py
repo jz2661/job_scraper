@@ -1,16 +1,11 @@
 import logging,os,sys
 import pandas as pd
-import numpy as np
 from datetime import datetime
 from util import *
 from efin import search_ejoblist
 from glassdoor import search_glassdoor_joblist
 from selenium.webdriver.chrome.options import Options
-
-# We need monkey_patching according to the page below
-# https://github.com/miguelgrinberg/Flask-SocketIO/issues/65
-from gevent import monkey
-monkey.patch_all()
+import concurrent.futures
 
 from linkedin_jobs_scraper import LinkedinScraper
 from linkedin_jobs_scraper.events import Events, EventData, EventMetrics
@@ -50,110 +45,136 @@ options.add_argument("--disable-dev-shm-usage")
 options.add_argument("--disable-browser-side-navigation")
 options.add_argument("--disable-gpu")
 
-scraper = LinkedinScraper(
-    chrome_executable_path=os.path.join(wdr, 'chromedriver.exe'), # Custom Chrome executable path (e.g. /foo/bar/bin/chromedriver) 
-    chrome_options=None,  # Custom Chrome options here
-    headless=True,  # Overrides headless mode only if chrome_options is None
-    max_workers=1,  # How many threads will be spawned to run queries concurrently (one Chrome driver for each thread)
-    slow_mo=2.1,  # Slow down the scraper to avoid 'Too many requests 429' errors (in seconds)
-    page_load_timeout=20  # Page load timeout (in seconds)    
-)
+print("BEFORE MAIN")
+if __name__ == '__main__':
+    __spec__ = None
+    # We need monkey_patching according to the page below
+    # https://github.com/miguelgrinberg/Flask-SocketIO/issues/65
 
-# Add event listeners
-scraper.on(Events.DATA, on_data)
-scraper.on(Events.ERROR, on_error)
-scraper.on(Events.END, on_end)
+    from gevent import monkey
+    monkey.patch_all()
 
-titles = ['Quantitative','Derivative','Python','Option Trader','Market Making','Vice President','Structuring', \
-            'QIS','Financial Engineering']
-#titles = ['Quantitative',] # test
+    scraper = LinkedinScraper(
+        chrome_executable_path=os.path.join(wdr, 'chromedriver.exe'), # Custom Chrome executable path (e.g. /foo/bar/bin/chromedriver) 
+        chrome_options=None,  # Custom Chrome options here
+        headless=True,  # Overrides headless mode only if chrome_options is None
+        max_workers=1,  # How many threads will be spawned to run queries concurrently (one Chrome driver for each thread)
+        slow_mo=2.1,  # Slow down the scraper to avoid 'Too many requests 429' errors (in seconds)
+        page_load_timeout=20  # Page load timeout (in seconds)    
+    )
 
-glassdoor_param = {
-    'q': 'quant',   
-    'days': 7,
-}
+    # Add event listeners
+    scraper.on(Events.DATA, on_data)
+    scraper.on(Events.ERROR, on_error)
+    scraper.on(Events.END, on_end)
 
-#### Glassdoor
-tfmap = {
-    'd': 1,
-    'w': 7,
-    'm': 30,
-}
-timefilter = tfmap[sys.argv[1]]
+    titles = ['Quantitative','Derivative','Python','Option Trader','Market Making','Vice President','Structuring', \
+                'QIS','Financial Engineering']
+    #titles = ['QIS','Option Trader'] # test
 
-# HongKong only now
-queries = [
-    {
-    'q': title,
-    'days': timefilter,
-    } for title in titles
-]
-gjoblist=search_glassdoor_joblist(queries)
-#### Glassdoor END
+    print("BEFORE POOL")
+    #pool = mp.Pool(len(titles))
+    
+    with concurrent.futures.ProcessPoolExecutor() as executor:
+
+        print("AFTER POOL")
+        #### Glassdoor
+        tfmap = {
+            'd': 1,
+            'w': 7,
+            'm': 30,
+        }
+        timefilter = tfmap[sys.argv[1]]
+
+        queries = [
+            {
+            'q': title,
+            'days': timefilter,
+            } for title in titles
+        ]
+        
+        gjoblist = []
+        #gjoblist = search_glassdoor_joblist(queries)
+        if 1:
+            pool = [executor.submit(search_glassdoor_joblist, [i]) for i in queries]
+            for i in concurrent.futures.as_completed(pool):
+                print(f'glassdoor jobs: {len(i.result())}')
+                gjoblist += i.result()
+
+        #### Glassdoor END
 
 
-#### EFIN
-tfmap = {
-    'd': 'ONE',
-    'w': 'SEVEN',
-    'm': 'SEVEN',
-}
-timefilter = tfmap[sys.argv[1]]
+    #### LinkedIn Start
+    tfmap = {
+        'd': TimeFilters.DAY,
+        'w': TimeFilters.WEEK,
+        'm': TimeFilters.MONTH,
+    }
+    timefilter = tfmap[sys.argv[1]]
 
-# HongKong only now
-queries = [
-    {
-    'q': title,
-    'radius': '50',
-    'radiusUnit': 'km',
-    'page': '1',
-    'pageSize': '1000',
-    'filters.positionType': 'PERMANENT',
-    'filters.employmentType': 'FULL_TIME',
-    #'filters.sectors': 'QUANTITATIVE_ANALYTICS|HEDGE_FUNDS|ASSET_MANAGEMENT|TRADING|DERIVATIVES|EQUITIES|RESEARCH|FINTECH|PRIVATE_EQUITY_VENTURE_CAPITAL',
-    'filters.locationPath': 'Asia/Hong Kong',
-    'filters.postedDate': timefilter,
-    'language': 'en',
-    } for title in titles
-]
-ejoblist=search_ejoblist(queries)
-#### EFIN END
-
-#### LinkedIn Start
-tfmap = {
-    'd': TimeFilters.DAY,
-    'w': TimeFilters.WEEK,
-    'm': TimeFilters.MONTH,
-}
-timefilter = tfmap[sys.argv[1]]
-
-queries = [
-    Query(
-        query=title,
-        options=QueryOptions(
-            #locations=['Singapore'],
-            locations=['Hong Kong','Singapore'],
-            apply_link = True,  # Try to extract apply link (easy applies are skipped). Default to False.
-            limit=200,
-            filters=QueryFilters(              
-                #company_jobs_url='https://www.linkedin.com/jobs/search/?f_C=1441%2C17876832%2C791962%2C2374003%2C18950635%2C16140%2C10440912&geoId=92000000',  # Filter by companies.
-                relevance=RelevanceFilters.RELEVANT,
-                time=timefilter,
-                type=[TypeFilters.FULL_TIME],
-                experience=None,                
+    queries = [
+        Query(
+            query=title,
+            options=QueryOptions(
+                #locations=['Singapore'],
+                locations=['Hong Kong','Singapore'],
+                apply_link = True,  # Try to extract apply link (easy applies are skipped). Default to False.
+                limit=200,
+                filters=QueryFilters(              
+                    #company_jobs_url='https://www.linkedin.com/jobs/search/?f_C=1441%2C17876832%2C791962%2C2374003%2C18950635%2C16140%2C10440912&geoId=92000000',  # Filter by companies.
+                    relevance=RelevanceFilters.RELEVANT,
+                    time=timefilter,
+                    type=[TypeFilters.FULL_TIME],
+                    experience=None,                
+                )
             )
-        )
-    ) for title in titles
-]
+        ) for title in titles
+    ]
+    
+    scraper.run(queries)
 
-scraper.run(queries)
-#### LinkedIn End
+    if 0:
+        pool = [executor.submit(scraper.run, [i]) for i in queries]
+        for i in concurrent.futures.as_completed(pool):
+            print(f'linkedin jobs: {len(i.result())}')
 
-df = pd.DataFrame([expand_data(d) for d in joblist]+ejoblist+gjoblist,columns=['date','title','company','ap','link','des','place'])
+    #### LinkedIn End
+    print("AFTER LINKEDIN")
 
-df = black(df)
-df = rank(df)
-df = remove_seen(df)
-df.to_excel('new.xlsx')
+    print("AFTER POOL CLOSE")
 
-send_mail(files=['new.xlsx'])
+    #### EFIN
+    tfmap = {
+        'd': 'ONE',
+        'w': 'SEVEN',
+        'm': 'SEVEN',
+    }
+    timefilter = tfmap[sys.argv[1]]
+
+    # HongKong only now
+    queries = [
+        {
+        'q': title,
+        'radius': '50',
+        'radiusUnit': 'km',
+        'page': '1',
+        'pageSize': '1000',
+        'filters.positionType': 'PERMANENT',
+        'filters.employmentType': 'FULL_TIME',
+        #'filters.sectors': 'QUANTITATIVE_ANALYTICS|HEDGE_FUNDS|ASSET_MANAGEMENT|TRADING|DERIVATIVES|EQUITIES|RESEARCH|FINTECH|PRIVATE_EQUITY_VENTURE_CAPITAL',
+        'filters.locationPath': 'Asia/Hong Kong',
+        'filters.postedDate': timefilter,
+        'language': 'en',
+        } for title in titles
+    ]
+    ejoblist=search_ejoblist(queries)
+    #### EFIN END
+
+    df = pd.DataFrame([expand_data(d) for d in joblist]+ejoblist+gjoblist,columns=['date','title','company','ap','link','des','place'])
+
+    df = black(df)
+    df = rank(df)
+    df = remove_seen(df)
+    df.to_excel('new.xlsx')
+
+    send_mail(files=['new.xlsx'])
