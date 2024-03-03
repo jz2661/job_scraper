@@ -16,7 +16,7 @@ from linkedin_jobs_scraper.filters import RelevanceFilters, TimeFilters, TypeFil
 logging.basicConfig(level = logging.WARN)
 
 os.environ['LI_AT_COOKIE'] = r'AQEDAQ7-cxkFtGe8AAABglkj3I0AAAGCfTBgjVYAJL4aurh9YlOjhSAyQiKUf3UE-YfetnoFOnZ0zkHU1pgOfPy46h-8dFWzbDdpafxgg3I24YmVqYsrZbnERmdt-5CNvlFAuIuTOBwvIGAJY6rc4p_h'
-wdr = r'C:\repo\job_scraper'
+wdr = r'C:\repo\linkedin'
 os.chdir(wdr)
 
 joblist = []
@@ -54,13 +54,17 @@ if __name__ == '__main__':
     from gevent import monkey
     monkey.patch_all()
 
+    titles = ['Quantitative','Derivative','Python','Option Trader','Market Making','Vice President','Structuring', \
+                'QIS','Financial Engineering']
+    #titles = ['QIS','Option Trader'] # test
+
     scraper = LinkedinScraper(
         chrome_executable_path=os.path.join(wdr, 'chromedriver.exe'), # Custom Chrome executable path (e.g. /foo/bar/bin/chromedriver) 
         chrome_options=None,  # Custom Chrome options here
         headless=True,  # Overrides headless mode only if chrome_options is None
         max_workers=1,  # How many threads will be spawned to run queries concurrently (one Chrome driver for each thread)
-        slow_mo=2.1,  # Slow down the scraper to avoid 'Too many requests 429' errors (in seconds)
-        page_load_timeout=20  # Page load timeout (in seconds)    
+        slow_mo=0.8,  # Slow down the scraper to avoid 'Too many requests 429' errors (in seconds)
+        page_load_timeout=15  # Page load timeout (in seconds)    
     )
 
     # Add event listeners
@@ -68,14 +72,10 @@ if __name__ == '__main__':
     scraper.on(Events.ERROR, on_error)
     scraper.on(Events.END, on_end)
 
-    titles = ['Quantitative','Derivative','Python','Option Trader','Market Making','Vice President','Structuring', \
-                'QIS','Financial Engineering']
-    #titles = ['QIS','Option Trader'] # test
-
     print("BEFORE POOL")
     #pool = mp.Pool(len(titles))
     
-    with concurrent.futures.ProcessPoolExecutor() as executor:
+    with concurrent.futures.ProcessPoolExecutor(2) as executor:
 
         print("AFTER POOL")
         #### Glassdoor
@@ -98,8 +98,11 @@ if __name__ == '__main__':
         if 1:
             pool = [executor.submit(search_glassdoor_joblist, [i]) for i in queries]
             for i in concurrent.futures.as_completed(pool):
-                print(f'glassdoor jobs: {len(i.result())}')
-                gjoblist += i.result()
+                try:
+                    print(f'glassdoor jobs: {len(i.result())}')
+                    gjoblist += i.result()
+                except:
+                    continue # anti scraping
 
         #### Glassdoor END
 

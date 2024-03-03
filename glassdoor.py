@@ -150,7 +150,7 @@ def search_glassdoor(params):
 
     jobs = []
     for url in [hk_url, sg_url]:
-        gs = glassdoor_scraper(None, url, 30)
+        gs = glassdoor_scraper(None, url, 70)
         
         for job in gs.jobs:
             try:
