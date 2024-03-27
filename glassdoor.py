@@ -17,6 +17,41 @@ import enlighten
 from packages.common import requestAndParse
 from packages.page import extract_maximums, extract_listings
 from packages.listing import extract_listing
+import concurrent.futures
+
+
+class GlassDoorScraper:
+    def __init__(self) -> None:
+        self.joblist = []    
+
+    def search(self, titles, freq="d"):
+        with concurrent.futures.ProcessPoolExecutor(2) as executor:
+            #### Glassdoor
+            tfmap = {
+                'd': 1,
+                'w': 7,
+                'm': 30,
+            }
+            timefilter = tfmap[freq]
+
+            queries = [
+                {
+                'q': title,
+                'days': timefilter,
+                } for title in titles
+            ]
+ 
+            pool = [executor.submit(search_glassdoor_joblist, [i]) for i in queries]
+            for i in concurrent.futures.as_completed(pool):
+                try:
+                    self.joblist += i.result()
+                except:
+                    continue # anti scraping
+
+            #### Glassdoor END
+        print(f"Finished {len(self.joblist)} jobs from GlassDoor")        
+        return self.joblist
+
 
 class glassdoor_scraper():
 

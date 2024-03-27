@@ -75,7 +75,7 @@ def send_mail(files=None,
     # me == the sender's email address
     # family = the list of all recipients' email addresses
     msg['From'] = 'zjzzjz2010@gmail.com'
-    msg['To'] = ['zjzzjz2010@gmail.com']
+    msg['To'] = ['zjzzjz2010@gmail.com','wangycthu@gmail.com']
     msg.preamble = 'You will not see this in a MIME-aware mail reader.\n'
 
     # Open the files in binary mode.  Use imghdr to figure out the
