@@ -5,19 +5,27 @@ from bs4 import BeautifulSoup
 from datetime import date
 import asyncio
 from pdb import set_trace
+from zenrows import ZenRowsClient
 
 class IndeedScraper:
     def __init__(self) -> None:
         self.joblist = []
 
-        self.headers = {
-            "User-agent": "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/77.0.3865.120 Safari/537.36"}
+        self.client = ZenRowsClient(os.environ['ZENROWS_API_KEY'])
 
     def search_one_page(self, title, page):
         url = 'https://hk.indeed.com/jobs?q=' + title + \
                 '&start=' + str(page * 10) + \
                 '&sort=date'
-        response = requests.get(url, headers=self.headers)
+        #response = requests.get(url, headers=self.headers)  
+
+        client = ZenRowsClient(os.environ['ZENROWS_API_KEY'])
+        response = client.get(url)
+
+        print(response.text)
+
+        response = requests.get(url, headers=headers)
+        
         html = response.text
 
         # Scrapping the Web
@@ -59,7 +67,7 @@ class IndeedScraper:
 
         # Writing to the CSV File
         with open(file_path, mode='w') as file:
-            columns = ['JOB_NAME', 'COMPANY', 'LOCATION', 'POSTED', 'APPLY_LINK'])
+            columns = ['JOB_NAME', 'COMPANY', 'LOCATION', 'POSTED', 'APPLY_LINK']
 
             # Requesting and getting the webpage using requests
             print(f'\nScraping in progress...\n')
@@ -148,5 +156,5 @@ def search_ejoblist(param_set):
 
 if __name__ == '__main__':
     __spec__ = None
-    ef = eFinScraper()
-    ef.search(['quant'])
+    ind = IndeedScraper()
+    res = ind.search_one_page('quant',0)
