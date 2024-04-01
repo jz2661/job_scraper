@@ -18,7 +18,7 @@ from packages.common import requestAndParse
 from packages.page import extract_maximums, extract_listings
 from packages.listing import extract_listing
 import concurrent.futures
-
+from pdb import set_trace
 
 class GlassDoorScraper:
     def __init__(self) -> None:
@@ -216,3 +216,8 @@ def search_glassdoor_joblist(param_set):
 #def search_glassdoor_joblist(param_set):
 #    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 #    return asyncio.run(search_list(param_set))
+
+if __name__ == '__main__':
+    __spec__ = None
+    gd = GlassDoorScraper()
+    gd.search(['quant'])
