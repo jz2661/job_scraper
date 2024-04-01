@@ -21,7 +21,7 @@ class JobScraper:
                 'QIS','Financial Engineering','Executive Director','Machine Learning','Data Science']
 
     def run(self, freq='d'):
-        all_list = reduce(lambda x, y: x + y, [x.search(self.titles, freq) for x in self.workers[2:]])
+        all_list = reduce(lambda x, y: x + y, [x.search(self.titles, freq) for x in self.workers[:2]])
 
         self.df = pd.DataFrame(all_list,columns=['date','title','company','ap','link','des','place'])
         self.df = black(self.df)

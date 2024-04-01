@@ -1,3 +1,6 @@
+import os
+os.environ['LI_AT_COOKIE'] = r'AQEDAQ7-cxkFtGe8AAABglkj3I0AAAGCfTBgjVYAJL4aurh9YlOjhSAyQiKUf3UE-YfetnoFOnZ0zkHU1pgOfPy46h-8dFWzbDdpafxgg3I24YmVqYsrZbnERmdt-5CNvlFAuIuTOBwvIGAJY6rc4p_h'
+
 import types
 import aiohttp
 from bs4 import BeautifulSoup
@@ -7,7 +10,8 @@ from datetime import date
 import asyncio
 import os
 from selenium.webdriver.chrome.options import Options
-import concurrent.futures
+import logging
+logging.basicConfig(level=logging.NOTSET)
 
 from linkedin_jobs_scraper import LinkedinScraper
 from linkedin_jobs_scraper.events import Events, EventData, EventMetrics
@@ -19,7 +23,7 @@ global_list = []
 # Fired once for each successfully processed job
 def on_data(data: EventData):
     #print('[ON_DATA]', data.title, data.company, data.company_link, data.date, data.link, data.insights, len(data.description))
-    self.joblist.append(data)
+    global_list.append(data)
 
 # Fired once for each page (25 jobs)
 def on_metrics(metrics: EventMetrics):
@@ -34,7 +38,6 @@ def on_end():
 
 class LinkedInScraper:
     def __init__(self) -> None:
-        os.environ['LI_AT_COOKIE'] = r'AQEDAQ7-cxkFtGe8AAABglkj3I0AAAGCfTBgjVYAJL4aurh9YlOjhSAyQiKUf3UE-YfetnoFOnZ0zkHU1pgOfPy46h-8dFWzbDdpafxgg3I24YmVqYsrZbnERmdt-5CNvlFAuIuTOBwvIGAJY6rc4p_h'
 
         self.options = Options()
         self.options.add_argument("start-maximized")
@@ -45,7 +48,7 @@ class LinkedInScraper:
         self.options.add_argument("--disable-browser-side-navigation")
         self.options.add_argument("--disable-gpu")        
 
-        self.joblist = []
+        #self.joblist = []
 
     @staticmethod
     def expand_data(data):
@@ -59,8 +62,7 @@ class LinkedInScraper:
         monkey.patch_all()
 
         scraper = LinkedinScraper(
-            chrome_executable_path=os.path.join('chromedriver.exe'), # Custom Chrome executable path (e.g. /foo/bar/bin/chromedriver) 
-            chrome_options=None,  # Custom Chrome options here
+            chrome_executable_path=os.path.join('./chromedriver'), # Custom Chrome executable path (e.g. /foo/bar/bin/chromedriver) 
             headless=True,  # Overrides headless mode only if chrome_options is None
             max_workers=1,  # How many threads will be spawned to run queries concurrently (one Chrome driver for each thread)
             slow_mo=0.8,  # Slow down the scraper to avoid 'Too many requests 429' errors (in seconds)
@@ -101,8 +103,11 @@ class LinkedInScraper:
         scraper.run(queries)
 
         #### LinkedIn End
-        print(f"Finished {len(self.joblist)} jobs from LinkedIn")
+        print(f"Finished {len(global_list)} jobs from LinkedIn")
 
-        return [self.expand_data(d) for d in self.joblist]
+        return [self.expand_data(d) for d in global_list]
 
-  
+if __name__ == '__main__':
+    __spec__ = None
+    lk = LinkedInScraper()
+    lk.search(['quant'])

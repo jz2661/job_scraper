@@ -18,7 +18,7 @@ from packages.common import requestAndParse
 from packages.page import extract_maximums, extract_listings
 from packages.listing import extract_listing
 import concurrent.futures
-
+from pdb import set_trace
 
 class GlassDoorScraper:
     def __init__(self) -> None:
@@ -180,11 +180,11 @@ def search_glassdoor(params):
     jobstr = params['q'].replace(' ','-')
     jobendlen = 10+len(jobstr)
     days = params['days']
-    hk_url= f"https://www.glassdoor.com.hk/Job/hong-kong-{jobstr}-jobs-SRCH_IL.0,9_IN106_KO10,{jobendlen}.htm?fromAge={days}&employerSizes=5"
+    hk_url= f"https://www.glassdoor.com.hk/Job/hong-kong-{jobstr}-jobs-SRCH_IL.0,9_IN106_KO10,{jobendlen}.htm?fromAge={days}"
     sg_url= f"https://www.glassdoor.com.hk/Job/singapore-{jobstr}-jobs-SRCH_IL.0,9_IN217_KO10,{jobendlen}.htm?fromAge={days}&employerSizes=5"
 
     jobs = []
-    for url in [hk_url, sg_url]:
+    for url in [hk_url]:
         gs = glassdoor_scraper(None, url, 70)
         
         for job in gs.jobs:
@@ -216,3 +216,8 @@ def search_glassdoor_joblist(param_set):
 #def search_glassdoor_joblist(param_set):
 #    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 #    return asyncio.run(search_list(param_set))
+
+if __name__ == '__main__':
+    __spec__ = None
+    gd = GlassDoorScraper()
+    gd.search(['quant'])
