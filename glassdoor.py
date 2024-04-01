@@ -181,10 +181,10 @@ def search_glassdoor(params):
     jobendlen = 10+len(jobstr)
     days = params['days']
     hk_url= f"https://www.glassdoor.com.hk/Job/hong-kong-{jobstr}-jobs-SRCH_IL.0,9_IN106_KO10,{jobendlen}.htm?fromAge={days}&employerSizes=5"
-    sg_url= f"https://www.glassdoor.com.hk/Job/singapore-{jobstr}-jobs-SRCH_IL.0,9_IN217_KO10,{jobendlen}.htm?fromAge={days}&employerSizes=5"
+    #sg_url= f"https://www.glassdoor.com.hk/Job/singapore-{jobstr}-jobs-SRCH_IL.0,9_IN217_KO10,{jobendlen}.htm?fromAge={days}&employerSizes=5"
 
     jobs = []
-    for url in [hk_url, sg_url]:
+    for url in [hk_url]:
         gs = glassdoor_scraper(None, url, 70)
         
         for job in gs.jobs:

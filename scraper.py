@@ -16,12 +16,12 @@ logging.basicConfig(level = logging.WARN)
 class JobScraper:
     def __init__(self) -> None:
         self.joblist = []
-        self.workers = [GlassDoorScraper(),eFinScraper(),LinkedInScraper()]
-        self.titles = ['Quantitative','Derivative','Python','Option Trader','Market Making','Vice President','Structuring', \
+        self.workers = [GlassDoorScraper(),eFinScraper(),]
+        self.titles = ['Quantitative','Head','Python','Lead','Market Making','Vice President','Structuring', \
                 'QIS','Financial Engineering','Executive Director','Machine Learning','Data Science']
 
     def run(self, freq='d'):
-        all_list = reduce(lambda x, y: x + y, [x.search(self.titles, freq) for x in self.workers[2:]])
+        all_list = reduce(lambda x, y: x + y, [x.search(self.titles, freq) for x in self.workers[:2]])
 
         self.df = pd.DataFrame(all_list,columns=['date','title','company','ap','link','des','place'])
         self.df = black(self.df)
