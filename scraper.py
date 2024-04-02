@@ -12,8 +12,7 @@ from functools import reduce
 # Change root logger level (default is WARN)
 logging.basicConfig(level = logging.WARN)
 
-#wdr = r'C:\repo\linkedin'
-#os.chdir(wdr)
+#indeed 5 pages (3days), jobsdb 2 pages each (1wk), efin 1wk
 
 class JobScraper:
     def __init__(self) -> None:
@@ -36,4 +35,4 @@ class JobScraper:
 if __name__ == '__main__':
     __spec__ = None
     js = JobScraper()
-    js.run()
+    js.run(freq='w')

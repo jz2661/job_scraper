@@ -76,7 +76,7 @@ class JobsDBScraper:
         return res
 
     async def search_list(self, titles):
-        param_set = [{'title': title, 'page': 1} for title in titles]
+        param_set = [{'title': title, 'page': pg} for title in titles for pg in range(1,3)]
 
         L = await asyncio.gather(
             *[self.search_one_page(**params) for params in param_set]

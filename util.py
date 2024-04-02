@@ -37,7 +37,9 @@ def expand_data(data):
 def black(df):
     bl = [x.upper() for x in ['C++','Java','Sale','contract','summer','compliance','graduate','middle', \
             'intern','junior','control','RELATION','legal','student','human','operations','marketing', \
-            'governance','account','quality','2024','campus','lawyer','CEO','Acquisition']]
+            'governance','account','quality','2024','campus','lawyer','CEO','Acquisition','customer', \
+            'crime',
+            ]]
     mask = df['title'].apply(lambda x: any(kw in x.upper() for kw in bl))
 
     bl = [x.upper() for x in ['Argyll Scott','DBS','Manulife','Selby','EY','HKIP','Hang Seng','AXA', \
@@ -49,7 +51,8 @@ def black(df):
             'personnel','Woven Planet','Amber Group','Ernst','China ',' Search','East Asia','OCBC','BAH ','UNITY ', \
             'Interactive Broker','Huawei','Lenovo','ConnectedGroup','Pinpoint','hays','Manpower','connected group', \
             'confidential','Exchange','Singapore','Cathay','NTT','ashford','Executive','nls','PFCC','OPTIONS', \
-            'Dah Sing',
+            'Dah Sing','school','wsp usa','oxford knight','unicorn advisor','kos international','cornerstone', \
+            'teksystems'
             ]]
     mask |= df['company'].apply(lambda x: any(kw in x.upper() for kw in bl))
 

@@ -1,4 +1,6 @@
 import os
+os.environ['ZENROWS_API_KEY'] = "53e21e2360ecfa932a00d5dfd2b83efa8c645df1"
+
 import csv
 import requests
 from bs4 import BeautifulSoup
@@ -19,6 +21,8 @@ class IndeedScraper:
         self.client = ZenRowsClient(os.environ['ZENROWS_API_KEY'])
 
     def search_one_page(self, title, page):
+        title = title.replace(' ', '+')
+
         url = 'https://hk.indeed.com/jobs?q=' + title + \
                 '&start=' + str(page * 10) + \
                 '&sort=date'
@@ -59,12 +63,11 @@ class IndeedScraper:
         return res
 
     def search(self, titles, freq="d"):
-
-        #TODO: page>0
+        or_title = ' or '.join(titles)
         #self.joblist = query_async(partial(self.search_one_page,page=0), titles)
-        for title in titles:
-            self.joblist += self.search_one_page(title, page=0)
-            print(f"Finished {title} jobs from Indeed")
+        for pg in range(5):
+            self.joblist += self.search_one_page(or_title, page=pg)
+            print(f"Finished page {pg}: {len(self.joblist)} jobs from Indeed")
 
         print(f"Finished {len(self.joblist)} jobs from Indeed")
         return self.joblist

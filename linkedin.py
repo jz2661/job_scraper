@@ -1,111 +1,67 @@
-import os
-os.environ['LI_AT_COOKIE'] = r'AQEDAQ7-cxkFtGe8AAABglkj3I0AAAGCfTBgjVYAJL4aurh9YlOjhSAyQiKUf3UE-YfetnoFOnZ0zkHU1pgOfPy46h-8dFWzbDdpafxgg3I24YmVqYsrZbnERmdt-5CNvlFAuIuTOBwvIGAJY6rc4p_h'
-
-import types
-import aiohttp
 from bs4 import BeautifulSoup
 import aiohttp
 import asyncio
 from datetime import date
 import asyncio
 import os
-from selenium.webdriver.chrome.options import Options
-import logging
-logging.basicConfig(level=logging.NOTSET)
-
-from linkedin_jobs_scraper import LinkedinScraper
-from linkedin_jobs_scraper.events import Events, EventData, EventMetrics
-from linkedin_jobs_scraper.query import Query, QueryOptions, QueryFilters
-from linkedin_jobs_scraper.filters import RelevanceFilters, TimeFilters, TypeFilters, ExperienceLevelFilters
-
-#globals
-global_list = []
-# Fired once for each successfully processed job
-def on_data(data: EventData):
-    #print('[ON_DATA]', data.title, data.company, data.company_link, data.date, data.link, data.insights, len(data.description))
-    global_list.append(data)
-
-# Fired once for each page (25 jobs)
-def on_metrics(metrics: EventMetrics):
-    print('[ON_METRICS]', str(metrics))
-
-def on_error(error):
-    print('[ON_ERROR]', error)
-
-def on_end():
-    print('[ON_END]')
-
 
 class LinkedInScraper:
     def __init__(self) -> None:
+        self.joblist = []
 
-        self.options = Options()
-        self.options.add_argument("start-maximized")
-        self.options.add_argument("enable-automation")
-        self.options.add_argument("--headless")
-        self.options.add_argument("--no-sandbox")
-        self.options.add_argument("--disable-dev-shm-usage")
-        self.options.add_argument("--disable-browser-side-navigation")
-        self.options.add_argument("--disable-gpu")        
+        self.client = ZenRowsClient(os.environ['ZENROWS_API_KEY'])
 
-        #self.joblist = []
+    def search_one_page(self, title, page):
+        title = title.replace(' ', '+')
 
-    @staticmethod
-    def expand_data(data):
-        return (data.date, data.title, data.company, data.apply_link, data.link, len(data.description), data.place)
+        url = 'https://hk.indeed.com/jobs?q=' + title + \
+                '&start=' + str(page * 10) + \
+                '&sort=date'
+
+        response = self.client.get(url)
+
+        html = response.text
+
+        # Scrapping the Web
+        soup = BeautifulSoup(html, 'lxml')
+        base_url = 'https://hk.indeed.com/viewjob?jk='
+        d = soup.find('div', attrs={'id': 'mosaic-provider-jobcards'})
+
+        jobs = soup.find_all('div', class_='job_seen_beacon')
+
+        # ['date','title','company','ap','link','des','place']
+        res = []
+        for job in jobs:
+            x = job.find('a')
+            job_id = x['data-jk']
+            job_title = job.find('span', title=True).text.strip()
+            company = job.find('span', {"data-testid": "company-name"}).text.strip()
+            location = job.find('div', {"data-testid": "text-location"}).text.strip()
+            posted = job.find('span', {"data-testid": "myJobsStateDate"}).text.strip()
+            des = job.find('ul').text.strip()
+            job_link = base_url + job_id
+            #print([job_title, company, location, posted, job_link])
+
+            post_days = re.findall(r'\d+', posted)  # extracting number of days from posted_str
+            job_date = datetime.now().isoformat()  # if days are not mentioned - using today
+            if post_days:
+                # calculated date of job posting if days are mentioned
+                job_date = (datetime.now() - timedelta(days=int(post_days[0]))).isoformat()
+
+            res.append(
+                [job_date, job_title, company, job_link, job_link, len(des), location.title()])
+
+        return res
 
     def search(self, titles, freq="d"):
-        # We need monkey_patching according to the page below
-        # https://github.com/miguelgrinberg/Flask-SocketIO/issues/65
+        or_title = ' or '.join(titles)
+        #self.joblist = query_async(partial(self.search_one_page,page=0), titles)
+        for pg in range(5):
+            self.joblist += self.search_one_page(or_title, page=pg)
+            print(f"Finished page {pg}: {len(self.joblist)} jobs from Indeed")
 
-        from gevent import monkey
-        monkey.patch_all()
-
-        scraper = LinkedinScraper(
-            chrome_executable_path=os.path.join('./chromedriver'), # Custom Chrome executable path (e.g. /foo/bar/bin/chromedriver) 
-            headless=True,  # Overrides headless mode only if chrome_options is None
-            max_workers=1,  # How many threads will be spawned to run queries concurrently (one Chrome driver for each thread)
-            slow_mo=0.8,  # Slow down the scraper to avoid 'Too many requests 429' errors (in seconds)
-            page_load_timeout=15  # Page load timeout (in seconds)    
-        )
-
-        # Add event listeners
-        scraper.on(Events.DATA, on_data)
-        scraper.on(Events.ERROR, on_error)
-        scraper.on(Events.END, on_end)
-
-        #### LinkedIn Start
-        tfmap = {
-            'd': TimeFilters.DAY,
-            'w': TimeFilters.WEEK,
-            'm': TimeFilters.MONTH,
-        }
-        timefilter = tfmap[freq]
-
-        queries = [
-            Query(
-                query=title,
-                options=QueryOptions(
-                    locations=['Hong Kong'],
-                    apply_link = True,  # Try to extract apply link (easy applies are skipped). Default to False.
-                    limit=200,
-                    filters=QueryFilters(              
-                        #company_jobs_url='https://www.linkedin.com/jobs/search/?f_C=1441%2C17876832%2C791962%2C2374003%2C18950635%2C16140%2C10440912&geoId=92000000',  # Filter by companies.
-                        relevance=RelevanceFilters.RELEVANT,
-                        time=timefilter,
-                        type=[TypeFilters.FULL_TIME],
-                        experience=None,                
-                    )
-                )
-            ) for title in titles
-        ]
-        
-        scraper.run(queries)
-
-        #### LinkedIn End
-        print(f"Finished {len(global_list)} jobs from LinkedIn")
-
-        return [self.expand_data(d) for d in global_list]
+        print(f"Finished {len(self.joblist)} jobs from Indeed")
+        return self.joblist
 
 if __name__ == '__main__':
     __spec__ = None
