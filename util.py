@@ -6,12 +6,30 @@ from datetime import datetime
 # Import smtplib for the actual sending function
 import smtplib
 import mimetypes
-from pdb import set_trace as st
+from pdb import set_trace
 
 # Here are the email package modules we'll need
 from email.message import EmailMessage
+import concurrent.futures
 
-__all__ = ['expand_data','black','rank','remove_seen','send_mail']
+#__all__ = ['expand_data','black','rank','remove_seen','send_mail']
+
+def query_async(f, queries):
+    listings = []
+
+    with concurrent.futures.ProcessPoolExecutor(4) as executor:
+
+        print("querying parallel")
+        
+        pool = [executor.submit(f, i) for i in queries]
+        for i in concurrent.futures.as_completed(pool):
+            try:
+                #set_trace()
+                listings += i.result()
+            except:
+                continue # anti scraping
+
+    return listings
 
 def expand_data(data):
     return (data.date, data.title, data.company, data.apply_link, data.link, len(data.description), data.place)
@@ -19,10 +37,10 @@ def expand_data(data):
 def black(df):
     bl = [x.upper() for x in ['C++','Java','Sale','contract','summer','compliance','graduate','middle', \
             'intern','junior','control','RELATION','legal','student','human','operations','marketing', \
-            'governance','account','quality','2023','campus','lawyer',]]
+            'governance','account','quality','2024','campus','lawyer',]]
     mask = df['title'].apply(lambda x: any(kw in x.upper() for kw in bl))
 
-    bl = [x.upper() for x in ['Argyll Scott','HSBC','DBS','Manulife','Selby','EY','HKIP','Hang Seng','AXA', \
+    bl = [x.upper() for x in ['Argyll Scott','DBS','Manulife','Selby','EY','HKIP','Hang Seng','AXA', \
             'McKinley','AIA','deloitte','Societe','prudential','kpmg','junan','consulting','agency','acca', \
             'Standard Chartered','agoda','wells','Recruitment','engineering','productivity','astri','RECRUIT', \
             ' hr ','visa','mastercard','pwc','uob','accenture','aig','grab','jll','moody','govtech','bloomberg', \
@@ -30,7 +48,7 @@ def black(df):
             'chinese','nanyang','binance','robert','rakuten','Talent','会社','株','LINE','Shiseido','VantagePoint', \
             'personnel','Woven Planet','Amber Group','Ernst','China ',' Search','East Asia','OCBC','BAH ','UNITY ', \
             'Interactive Broker','Huawei','Lenovo','ConnectedGroup','Pinpoint','hays','Manpower','connected group', \
-            'confidential','Exchange','Singapore','Cathay','NTT',
+            'confidential','Exchange','Singapore','Cathay','NTT','ashford',
             ]]
     mask |= df['company'].apply(lambda x: any(kw in x.upper() for kw in bl))
 
