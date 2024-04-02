@@ -36,7 +36,7 @@ def expand_data(data):
 
 def black(df):
     bl = [x.upper() for x in ['C++','Java','Sale','contract','summer','compliance','graduate','middle', \
-            'intern','junior','control','RELATION','legal','student','human','operations','marketing', \
+            'intern','junior','control','RELATION','legal','student','human','operation','marketing', \
             'governance','account','quality','2024','campus','lawyer','CEO','Acquisition','customer', \
             'crime',
             ]]
@@ -44,7 +44,7 @@ def black(df):
 
     bl = [x.upper() for x in ['Argyll Scott','DBS','Manulife','Selby','EY','HKIP','Hang Seng','AXA', \
             'McKinley','AIA','deloitte','Societe','prudential','kpmg','junan','consulting','agency','acca', \
-            'Standard Chartered','agoda','wells','Recruitment','engineering','productivity','astri','RECRUIT', \
+            'agoda','wells','Recruitment','engineering','productivity','astri','RECRUIT', \
             ' hr ','visa','mastercard','pwc','uob','accenture','aig','grab','jll','moody','govtech','bloomberg', \
             'ratings','time','randstad','Michael','EASTERN','spring','baptist','sun life','sumitomo','jac','QUBE', \
             'chinese','nanyang','binance','robert','rakuten','Talent','会社','株','LINE','Shiseido','VantagePoint', \

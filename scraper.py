@@ -19,7 +19,7 @@ class JobScraper:
         self.joblist = []
         self.workers = [JobsDBScraper(),IndeedScraper(),eFinScraper(),]
         self.titles = ['Quantitative','Head','Lead','Vice President','Algorithm', \
-                'Executive Director','Machine Learning','Data Science']
+                'Director','Machine Learning','Data Science','Scientist','Stratagy','AI']
 
     def run(self, freq='d'):
         all_list = reduce(lambda x, y: x + y, [x.search(self.titles, freq) for x in self.workers[:]])
@@ -27,7 +27,10 @@ class JobScraper:
         self.df = pd.DataFrame(all_list,columns=['date','title','company','ap','link','des','place'])
         self.df = black(self.df)
         self.df = rank(self.df)
-        self.df = remove_seen(self.df)
+        try:
+            self.df = remove_seen(self.df)
+        except:
+            logging.WARN("Remove seen failed")
         self.df.to_excel('new.xlsx')
 
         send_mail(files=['new.xlsx'])
@@ -35,4 +38,4 @@ class JobScraper:
 if __name__ == '__main__':
     __spec__ = None
     js = JobScraper()
-    js.run(freq='w')
+    js.run(freq='d')
