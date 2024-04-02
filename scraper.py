@@ -5,6 +5,7 @@ from util import *
 from efin import eFinScraper
 from glassdoor import GlassDoorScraper
 from indeed import IndeedScraper
+from jobsdb import JobsDBScraper
 from linkedin import LinkedInScraper
 from functools import reduce
 
@@ -17,7 +18,7 @@ logging.basicConfig(level = logging.WARN)
 class JobScraper:
     def __init__(self) -> None:
         self.joblist = []
-        self.workers = [IndeedScraper(),eFinScraper(),]
+        self.workers = [JobsDBScraper(),IndeedScraper(),eFinScraper(),]
         self.titles = ['Quantitative','Head','Lead','Vice President','Algorithm', \
                 'Executive Director','Machine Learning','Data Science']
 
