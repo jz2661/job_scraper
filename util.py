@@ -38,7 +38,7 @@ def black(df):
     bl = [x.upper() for x in ['C++','Java','Sale','contract','summer','compliance','graduate','middle', \
             'intern','junior','control','RELATION','legal','student','human','operation','marketing', \
             'governance','account','quality','2024','campus','lawyer','CEO','Acquisition','customer', \
-            'crime',
+            'crime','clerk'
             ]]
     mask = df['title'].apply(lambda x: any(kw in x.upper() for kw in bl))
 
@@ -52,7 +52,7 @@ def black(df):
             'Interactive Broker','Huawei','Lenovo','ConnectedGroup','Pinpoint','hays','Manpower','connected group', \
             'confidential','Exchange','Singapore','Cathay','NTT','ashford','Executive','nls','PFCC','OPTIONS', \
             'Dah Sing','school','wsp usa','oxford knight','unicorn advisor','kos international','cornerstone', \
-            'teksystems'
+            'teksystems','Appointments','control automation','KDB Asia',
             ]]
     mask |= df['company'].apply(lambda x: any(kw in x.upper() for kw in bl))
 
