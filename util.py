@@ -52,7 +52,8 @@ def black(df):
             'Interactive Broker','Huawei','Lenovo','ConnectedGroup','Pinpoint','hays','Manpower','connected group', \
             'confidential','Exchange','Singapore','Cathay','NTT','ashford','Executive','nls','PFCC','OPTIONS', \
             'Dah Sing','school','wsp usa','oxford knight','unicorn advisor','kos international','cornerstone', \
-            'teksystems','Appointments','control automation','KDB Asia','Aptitude Asia','Crypto',
+            'teksystems','Appointments','control automation','KDB Asia','Aptitude Asia','Crypto','Chong Hing', \
+            'OKX',
             ]]
     mask |= df['company'].apply(lambda x: any(kw in x.upper() for kw in bl))
 
