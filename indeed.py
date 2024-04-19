@@ -1,5 +1,5 @@
 import os
-os.environ['ZENROWS_API_KEY'] = "53e21e2360ecfa932a00d5dfd2b83efa8c645df1"
+os.environ['ZENROWS_API_KEY'] = "c98765a826f45ea615f7f4a6ede8302c0142fbfa"
 
 import csv
 import requests
@@ -28,7 +28,7 @@ class IndeedScraper:
                 '&sort=date'
 
         response = self.client.get(url)
-
+        #set_trace()
         html = response.text
 
         # Scrapping the Web
