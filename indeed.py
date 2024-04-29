@@ -1,5 +1,5 @@
 import os
-os.environ['ZENROWS_API_KEY'] = "c98765a826f45ea615f7f4a6ede8302c0142fbfa"
+os.environ['ZENROWS_API_KEY'] = "f931ff24549b817c72566b0050259fba4a6c75be"
 
 import csv
 import requests
